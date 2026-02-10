@@ -1,5 +1,6 @@
 # ReliServe
 
+<<<<<<< Updated upstream
 **Reliability-first local services marketplace**  
 Built for urgency, accountability, and real-world trust.
 
@@ -85,3 +86,56 @@ reliserv/
     api/        # Backend (Node + Express)
   infra/        # Docker (Postgres, Redis)
   docs/         # Architecture & sprint notes
+=======
+## Prerequisites
+- Node.js 20+ and npm
+- Docker Desktop (WSL2 backend on Windows)
+- Git
+
+## Run locally (5 minutes)
+
+### 1) Infra (Postgres + Redis)
+```powershell
+docker compose -f infra/docker-compose.yml up -d
+```
+
+### 2) API
+```powershell
+cd apps/api
+cp .env.example .env
+npm install
+npm run dev
+```
+
+### 3) Web
+```powershell
+cd apps/web
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open:
+- `http://localhost:5173`
+- `http://localhost:4000/health`
+
+## Notes
+- `.env` files are ignored by git. Do not commit secrets.
+- Stop infra with:
+```powershell
+docker compose -f infra/docker-compose.yml down
+```
+
+## Windows + Docker Desktop Troubleshooting
+If Docker Desktop won’t start:
+- Check WSL status:
+```powershell
+wsl --status
+```
+- If WSL is missing:
+```powershell
+wsl --install
+```
+  Then reboot.
+- Ensure Hyper-V and CPU virtualization are enabled in BIOS.
+>>>>>>> Stashed changes
