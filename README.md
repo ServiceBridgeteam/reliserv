@@ -107,6 +107,15 @@ npm install
 npm run dev
 ```
 
+### 2.1) Prisma (DB schema + seed)
+```powershell
+cd apps/api
+# Ensure DATABASE_URL is set in .env
+# DATABASE_URL="postgresql://reliserv:reliserv@localhost:5432/reliserv?schema=public"
+npx prisma migrate dev --name init_v1
+npx prisma db seed
+```
+
 ### 3) Web
 ```powershell
 cd apps/web
@@ -125,6 +134,7 @@ Open:
 ```powershell
 docker compose -f infra/docker-compose.yml down
 ```
+- Prisma 7 uses a driver adapter; this repo is configured with `@prisma/adapter-pg` and `pg`.
 
 ## Windows + Docker Desktop Troubleshooting
 If Docker Desktop won’t start:
