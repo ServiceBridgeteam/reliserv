@@ -1,59 +1,75 @@
 # ReliServe
 
-<<<<<<< Updated upstream
 **Reliability-first local services marketplace**  
 Built for urgency, accountability, and real-world trust.
 
 ---
 
-##  Overview
+## Overview
 
-ReliServe is a team-built web application that rethinks local service marketplaces by prioritizing **reliability over star ratings** and handling **emergency service requests** intelligently.
+ReliServe rethinks local service marketplaces by prioritizing:
 
-Unlike traditional platforms that rely on inflated reviews, ReliServe introduces:
+- Reliability over inflated star ratings
+- Emergency-first job handling
+- Mutual accountability between customers and workers
+- Behavior-based trust scoring
+
+Unlike traditional platforms, ReliServe introduces:
+
 - Behavior-based reliability scoring
-- Mutual accountability for customers and workers
-- Emergency-first matching with lock-on-accept logic
-- AI-assisted job clarity to prevent disputes and cancellations
+- Lock-on-accept emergency handling
+- AI-assisted job clarity to reduce disputes
+- Structured job lifecycle enforcement
 
-This project is being developed as a **collaborative, production-style system** by a student engineering team.
+This project is being developed as a **production-style collaborative system** by a 4-developer engineering team.
 
 ---
 
-##  Core Goals
+## Core Goals
 
-- Reduce job cancellations and no-shows
+- Reduce cancellations and no-shows
 - Improve emergency response times
-- Reward consistent, reliable behavior
-- Prevent disputes before they happen
+- Reward consistent behavior
+- Prevent disputes through structured job scope
 - Simulate real-world marketplace constraints
 
 ---
 
-##  Key Features (V1)
+## V1 Backend Features (Completed)
 
-### Customer
-- Post normal or emergency service requests
-- AI-assisted job clarification & scope locking
-- Fair price range suggestions
-- Live job tracking
-- Reliability score visibility
+### Authentication
+- POST `/v1/auth/signup`
+- POST `/v1/auth/login`
+- GET `/v1/auth/me`
+- JWT authentication
+- bcryptjs password hashing
 
-### Worker
-- Worker onboarding & availability control
-- Emergency opt-in
-- Job requests ranked by fit and reliability
-- Locked job scope to prevent disputes
+### Jobs API
+- POST `/v1/jobs`
+- GET `/v1/jobs/:id`
+- GET `/v1/jobs?mine=true`
+- Default job status = `OPEN`
+- Protected routes via JWT middleware
 
-### Platform
-- Reliability score (behavior-based, not ratings)
-- Emergency job prioritization
-- Map-based matching (placeholder in V1)
-- Mutual accountability system
+### Database
+- PostgreSQL (Docker)
+- Prisma ORM
+- Tables:
+- User
+- WorkerProfile
+- Job
+- JobEvent
+- Review
+- Migrations + seed script
+
+### Validation
+- Zod schema validation
+- Proper HTTP status handling
+- Duplicate email protection
 
 ---
 
-##  Tech Stack
+## Tech Stack
 
 ### Frontend
 - React (TypeScript)
@@ -65,58 +81,75 @@ This project is being developed as a **collaborative, production-style system** 
 - Node.js
 - Express
 - TypeScript
-- REST APIs
+- Prisma ORM
+- PostgreSQL
 
 ### Infrastructure
-- PostgreSQL (Docker)
-- Redis (Docker)
+- Docker
 - Docker Compose
-
->  Note: V1 currently uses mocked data for UI-first development.  
-> Backend wiring and realtime features are added incrementally.
+- Redis (reserved for realtime V2)
 
 ---
 
-##  Repository Structure
+## Repository Structure
 
 ```txt
 reliserv/
   apps/
-    web/        # Frontend (React)
-    api/        # Backend (Node + Express)
+    web/        # React frontend
+    api/        # Node + Express backend
   infra/        # Docker (Postgres, Redis)
-  docs/         # Architecture & sprint notes
-=======
-## Prerequisites
-- Node.js 20+ and npm
-- Docker Desktop (WSL2 backend on Windows)
-- Git
+  docs/         # Architecture notes
+```
 
-## Run locally (5 minutes)
+---
 
-### 1) Infra (Postgres + Redis)
+# Run Locally (5 Minutes)
+
+## 1) Start Infrastructure (Postgres)
+
 ```powershell
 docker compose -f infra/docker-compose.yml up -d
 ```
 
-### 2) API
+## 2) Backend Setup
+
 ```powershell
 cd apps/api
 cp .env.example .env
 npm install
-npm run dev
 ```
 
-### 2.1) Prisma (DB schema + seed)
+Ensure `.env` contains:
+
+```txt
+DATABASE_URL="postgresql://reliserv:reliserv@localhost:5432/reliserv?schema=public"
+JWT_SECRET="dev_super_secret_change_me"
+```
+
+Run Prisma:
+
 ```powershell
-cd apps/api
-# Ensure DATABASE_URL is set in .env
-# DATABASE_URL="postgresql://reliserv:reliserv@localhost:5432/reliserv?schema=public"
 npx prisma migrate dev --name init_v1
 npx prisma db seed
 ```
 
-### 3) Web
+Start API:
+
+```powershell
+npm run dev
+```
+
+Backend runs at:
+
+`http://localhost:4000`
+
+Health check:
+
+`http://localhost:4000/health`
+
+## 3) Frontend Setup
+
 ```powershell
 cd apps/web
 cp .env.example .env
@@ -124,28 +157,55 @@ npm install
 npm run dev
 ```
 
-Open:
-- `http://localhost:5173`
-- `http://localhost:4000/health`
+Frontend runs at:
 
-## Notes
-- `.env` files are ignored by git. Do not commit secrets.
-- Stop infra with:
+`http://localhost:5173`
+
+## Stop Infrastructure
+
 ```powershell
 docker compose -f infra/docker-compose.yml down
 ```
-- Prisma 7 uses a driver adapter; this repo is configured with `@prisma/adapter-pg` and `pg`.
+
+---
+
+## Important Notes
+
+- `.env` files are ignored by Git.
+- Do not commit secrets.
+- Prisma 7 uses `@prisma/adapter-pg` with `pg`.
+
+---
 
 ## Windows + Docker Desktop Troubleshooting
-If Docker Desktop won’t start:
-- Check WSL status:
+
+If Docker Desktop fails:
+
+Check WSL:
+
 ```powershell
 wsl --status
 ```
-- If WSL is missing:
+
+If missing:
+
 ```powershell
 wsl --install
 ```
-  Then reboot.
-- Ensure Hyper-V and CPU virtualization are enabled in BIOS.
->>>>>>> Stashed changes
+
+Then reboot.
+
+Ensure:
+
+- CPU virtualization enabled in BIOS
+- Hyper-V enabled
+- Docker Desktop using WSL2 backend
+
+---
+
+## V1 In Progress
+
+- Emergency lock-on-accept logic
+- Job lifecycle state transitions
+- Reliability score update system
+- Worker acceptance flow
