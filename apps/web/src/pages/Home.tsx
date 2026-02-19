@@ -2,19 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Zap } from "lucide-react";
 import UsersIcon from "../components/icons/UsersIcon";
 
-export default function Home({
-  setIsAuthenticated,
-  setUser,
-}: {
-  setIsAuthenticated: (v: boolean) => void;
-  setUser: (fn: (prev: any) => any) => void;
-}) {
+export default function Home() {
   const navigate = useNavigate();
 
-  const handleSignIn = (role: "customer" | "worker") => {
-    setIsAuthenticated(true);
-    setUser((prev) => ({ ...prev, role }));
-    navigate(role === "worker" ? "/worker/dashboard" : "/dashboard");
+  const goToLogin = () => {
+    navigate("/auth/login");
   };
 
   return (
@@ -28,7 +20,7 @@ export default function Home({
             <span className="text-2xl font-bold text-white">ReliServe</span>
           </div>
           <button
-            onClick={() => handleSignIn("customer")}
+            onClick={goToLogin}
             className="px-6 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all duration-300 border border-white/20"
           >
             Sign In
@@ -56,13 +48,13 @@ export default function Home({
               style={{ animationDelay: "0.2s" }}
             >
               <button
-                onClick={() => handleSignIn("customer")}
+                onClick={goToLogin}
                 className="w-full sm:w-auto px-8 py-4 bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-600 transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/30"
               >
                 Post a Job
               </button>
               <button
-                onClick={() => handleSignIn("customer")}
+                onClick={goToLogin}
                 className="w-full sm:w-auto px-8 py-4 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all duration-300 hover:scale-105 shadow-lg shadow-red-500/30 flex items-center justify-center gap-2"
               >
                 <Zap className="w-5 h-5" />
@@ -72,7 +64,7 @@ export default function Home({
 
             <div className="pt-4">
               <button
-                onClick={() => handleSignIn("worker")}
+                onClick={goToLogin}
                 className="text-slate-300 hover:text-white underline decoration-emerald-400/50 hover:decoration-emerald-400 transition-all"
               >
                 Are you a service provider? Join as a worker →
