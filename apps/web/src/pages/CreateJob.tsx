@@ -1,12 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Camera, CheckCircle, DollarSign, MapPin, Shield, Sparkles, Upload, Zap } from "lucide-react";
+import { api } from "../api/client";
+
+type CreateJobBody = {
+  title: string;
+  description: string;
+  jobType: string;
+  urgency: "EMERGENCY" | "NORMAL";
+  // Optional fields if backend supports them (safe to send if ignored)
+  priceMin?: number;
+  priceMax?: number;
+  lockedScope?: string;
+  locationText?: string;
+  lat?: number;
+  lng?: number;
+};
 
 export default function CreateJob() {
   const navigate = useNavigate();
+
   const [jobType, setJobType] = useState("plumbing");
   const [isEmergency, setIsEmergency] = useState(false);
   const [description, setDescription] = useState("");
+
   const [showAIQuestions, setShowAIQuestions] = useState(false);
   const [aiQuestionsCompleted, setAiQuestionsCompleted] = useState(false);
 
@@ -17,16 +34,68 @@ export default function CreateJob() {
     photos: false,
   });
 
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const priceMin = isEmergency ? 220 : 90;
   const priceMax = isEmergency ? 380 : 160;
 
-  const onStartAI = () => {
-    setShowAIQuestions(true);
-  };
+  const onStartAI = () => setShowAIQuestions(true);
 
   const onFinishAI = () => {
     setAiQuestionsCompleted(true);
     setShowAIQuestions(false);
+  };
+
+  function buildLockedScope() {
+    // Keep it simple: combine description + AI answers if available
+    const parts: string[] = [];
+    if (description.trim()) parts.push(description.trim());
+    if (aiQuestionsCompleted) {
+      if (questions.urgency.trim()) parts.push(`Urgency: ${questions.urgency.trim()}`);
+      if (questions.access.trim()) parts.push(`Access: ${questions.access.trim()}`);
+      if (questions.previousFixes.trim()) parts.push(`Previous fixes: ${questions.previousFixes.trim()}`);
+    }
+    return parts.join("\n");
+  }
+
+  const onPostJob = async () => {
+    setSubmitError(null);
+
+    if (!description.trim()) {
+      setSubmitError("Please add a description so workers know what you need.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Basic title from job type + emergency flag
+      const title = `${isEmergency ? "Emergency - " : ""}${jobType[0].toUpperCase()}${jobType.slice(1)} job`;
+
+      const body: CreateJobBody = {
+        title,
+        description: description.trim(),
+        jobType,
+        urgency: isEmergency ? "EMERGENCY" : "NORMAL",
+        priceMin,
+        priceMax,
+        lockedScope: buildLockedScope(),
+        locationText: "Use current location",
+        // lat/lng intentionally omitted for now (no geolocation yet)
+      };
+
+      await api<any>("/v1/jobs", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+
+      // Success → go back to dashboard. On refresh it should appear from DB.
+      navigate("/dashboard");
+    } catch (e: any) {
+      setSubmitError(e?.message || "Failed to post job. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -155,11 +224,15 @@ export default function CreateJob() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl bg-white hover:bg-slate-100 transition">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl bg-white hover:bg-slate-100 transition"
+                  >
                     <Camera className="w-4 h-4" /> Add photos
                   </button>
 
                   <button
+                    type="button"
                     onClick={onFinishAI}
                     className="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition"
                   >
@@ -190,6 +263,12 @@ export default function CreateJob() {
               </div>
             </div>
 
+            {submitError && (
+              <div className="mt-4 text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+                {submitError}
+              </div>
+            )}
+
             <div className="mt-6 flex items-center justify-between">
               <div className="flex items-center gap-2 text-slate-600 text-sm">
                 <Shield className="w-4 h-4 text-emerald-600" />
@@ -197,10 +276,11 @@ export default function CreateJob() {
               </div>
 
               <button
-                onClick={() => navigate("/live-job")}
-                className="px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition"
+                disabled={submitting}
+                onClick={onPostJob}
+                className="px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Post Job
+                {submitting ? "Posting..." : "Post Job"}
               </button>
             </div>
           </div>
@@ -208,7 +288,7 @@ export default function CreateJob() {
 
         <div className="mt-6 text-sm text-slate-500 flex items-center gap-2 justify-center">
           <Upload className="w-4 h-4" />
-          V1: This is UI-first with mock data. Backend wiring comes next sprint.
+          V1: Backend wiring enabled — jobs are created via API.
         </div>
       </div>
     </div>

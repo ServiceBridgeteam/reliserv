@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "../components/layout/AppLayout";
 import { mockData } from "../mock/mockData";
@@ -11,6 +11,7 @@ import MapView from "../pages/MapView";
 import Profile from "../pages/Profile";
 import LiveJob from "../pages/LiveJob";
 import Completion from "../pages/Completion";
+import AuthLogin from "../pages/AuthLogin";
 
 import WorkerOnboarding from "../pages/worker/WorkerOnboarding";
 import WorkerDashboard from "../pages/worker/WorkerDashboard";
@@ -19,72 +20,117 @@ import WorkerLiveJob from "../pages/worker/WorkerLiveJob";
 import WorkerCompletion from "../pages/worker/WorkerCompletion";
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // 🔐 Auth state (persisted)
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
+
   const [user, setUser] = useState(mockData.user);
   const [workerProfile, setWorkerProfile] = useState(mockData.workerProfile);
 
-  const onRoleChange = (role: "customer" | "worker") => setUser((p) => ({ ...p, role }));
+  const onRoleChange = (role: "customer" | "worker") =>
+    setUser((p) => ({ ...p, role }));
 
-  return (
-    <AppLayout isAuthenticated={isAuthenticated} user={user} onRoleChange={onRoleChange}>
-      <Routes>
-        <Route path="/" element={<Home setIsAuthenticated={setIsAuthenticated} setUser={setUser} />} />
+  // Sync auth if token changes
+  useEffect(() => {
+    setIsAuthenticated(!!localStorage.getItem("token"));
+  }, []);
 
-        {/* Customer */}
-        <Route path="/dashboard" element={isAuthenticated ? <Dashboard user={user} /> : <Navigate to="/" replace />} />
-        <Route path="/post-job" element={isAuthenticated ? <CreateJob /> : <Navigate to="/" replace />} />
-        <Route path="/emergency" element={isAuthenticated ? <Emergency user={user} /> : <Navigate to="/" replace />} />
-        <Route path="/map" element={isAuthenticated ? <MapView /> : <Navigate to="/" replace />} />
-        <Route path="/profile" element={isAuthenticated ? <Profile user={user} /> : <Navigate to="/" replace />} />
-        <Route path="/live-job" element={isAuthenticated ? <LiveJob /> : <Navigate to="/" replace />} />
-        <Route path="/completion" element={isAuthenticated ? <Completion /> : <Navigate to="/" replace />} />
+return (
+  <Routes>
+    {/* Public */}
+    <Route path="/" element={<Home />} />
+    <Route
+      path="/auth/login"
+      element={<AuthLogin onLoginSuccess={() => setIsAuthenticated(true)} />}
+    />
 
-        {/* Worker */}
-        <Route
-          path="/worker/onboarding"
-          element={
-            isAuthenticated ? (
-              <WorkerOnboarding workerProfile={workerProfile} setWorkerProfile={setWorkerProfile} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/worker/dashboard"
-          element={
-            isAuthenticated ? (
-              <WorkerDashboard user={user} workerProfile={workerProfile} setWorkerProfile={setWorkerProfile} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/worker/requests"
-          element={isAuthenticated ? <WorkerRequests user={user} /> : <Navigate to="/" replace />}
-        />
-        <Route
-          path="/worker/live-job/:jobId"
-          element={isAuthenticated ? <WorkerLiveJob /> : <Navigate to="/" replace />}
-        />
-        <Route
-          path="/worker/completion"
-          element={isAuthenticated ? <WorkerCompletion /> : <Navigate to="/" replace />}
-        />
+    {/* Everything else uses AppLayout */}
+    <Route
+      path="/*"
+      element={
+        <AppLayout
+          isAuthenticated={isAuthenticated}
+          user={user}
+          onRoleChange={onRoleChange}
+        >
+          <Routes>
+            {/* Customer */}
+            <Route
+              path="dashboard"
+              element={isAuthenticated ? <Dashboard user={user} /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="post-job"
+              element={isAuthenticated ? <CreateJob /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="emergency"
+              element={isAuthenticated ? <Emergency user={user} /> : <Navigate to="/" replace />}
+            />
+            <Route path="map" element={isAuthenticated ? <MapView /> : <Navigate to="/" replace />} />
+            <Route
+              path="profile"
+              element={isAuthenticated ? <Profile user={user} /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="live-job"
+              element={isAuthenticated ? <LiveJob /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="completion"
+              element={isAuthenticated ? <Completion /> : <Navigate to="/" replace />}
+            />
 
-        {/* Catch-all */}
-        <Route
-          path="*"
-          element={
-            isAuthenticated ? (
-              <Navigate to={user.role === "worker" ? "/worker/dashboard" : "/dashboard"} replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-      </Routes>
-    </AppLayout>
-  );
+            {/* Worker */}
+            <Route
+              path="worker/onboarding"
+              element={
+                isAuthenticated ? (
+                  <WorkerOnboarding workerProfile={workerProfile} setWorkerProfile={setWorkerProfile} />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
+            <Route
+              path="worker/dashboard"
+              element={
+                isAuthenticated ? (
+                  <WorkerDashboard user={user} workerProfile={workerProfile} setWorkerProfile={setWorkerProfile} />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
+            <Route
+              path="worker/requests"
+              element={isAuthenticated ? <WorkerRequests user={user} /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="worker/live-job/:jobId"
+              element={isAuthenticated ? <WorkerLiveJob /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="worker/completion"
+              element={isAuthenticated ? <WorkerCompletion /> : <Navigate to="/" replace />}
+            />
+
+            {/* Catch-all inside layout */}
+            <Route
+              path="*"
+              element={
+                isAuthenticated ? (
+                  <Navigate to={user.role === "worker" ? "/worker/dashboard" : "/dashboard"} replace />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
+          </Routes>
+        </AppLayout>
+      }
+    />
+  </Routes>
+);
 }
