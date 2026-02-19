@@ -148,6 +148,8 @@ Health check:
 
 `http://localhost:4000/health`
 
+Use `localhost` for API URLs in local development (recommended over `127.0.0.1`).
+
 ## 3) Frontend Setup
 
 ```powershell
