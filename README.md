@@ -48,8 +48,16 @@ This project is being developed as a **production-style collaborative system** b
 - POST `/v1/jobs`
 - GET `/v1/jobs/:id`
 - GET `/v1/jobs?mine=true`
+- POST `/v1/jobs/:id/accept`
 - Default job status = `OPEN`
+- Atomic lock-on-accept (`OPEN` -> `LOCKED`) with 409 conflict if already taken
 - Protected routes via JWT middleware
+
+### Emergency + Worker API
+- POST `/v1/emergency`
+- GET `/v1/worker/requests`
+- Emergency jobs are created with `urgency=EMERGENCY` and `status=OPEN`
+- Worker requests feed returns open emergency jobs (latest first)
 
 ### Database
 - PostgreSQL (Docker)
@@ -207,7 +215,21 @@ Ensure:
 
 ## V1 In Progress
 
-- Emergency lock-on-accept logic
 - Job lifecycle state transitions
 - Reliability score update system
-- Worker acceptance flow
+
+---
+
+## Atomic Lock Test Proof
+
+Validated on local API (`http://localhost:4000`) with 3 users:
+
+1. Customer created emergency job via POST `/v1/emergency` -> `201`
+2. Worker A accepted via POST `/v1/jobs/:id/accept` -> `200`
+3. Worker B accepted same job via POST `/v1/jobs/:id/accept` -> `409`
+
+Conflict response from step 3:
+
+```json
+{ "error": "Job already taken" }
+```

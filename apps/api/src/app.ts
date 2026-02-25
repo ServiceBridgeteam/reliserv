@@ -8,6 +8,8 @@ import { errorMiddleware } from "./middlewares/error";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { jobsRoutes } from "./modules/jobs/jobs.routes";
 import { emergencyRoutes } from "./modules/emergency/emergency.routes";
+import { workerRoutes } from "./modules/worker/worker.routes";
+import { jobsAcceptRoutes } from "./modules/jobs/jobs.accept.routes";
 
 export function createApp() {
   const app = express();
@@ -21,7 +23,9 @@ export function createApp() {
 
   app.use("/v1/auth", authRoutes);
   app.use("/v1/jobs", jobsRoutes);
+  app.use("/v1/jobs", jobsAcceptRoutes);
   app.use("/v1/emergency", emergencyRoutes);
+  app.use("/v1/worker", workerRoutes);
 
   app.use(errorMiddleware);
 
