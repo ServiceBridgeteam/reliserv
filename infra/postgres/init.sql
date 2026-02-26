@@ -1,1 +1,1 @@
--- placeholder (optional)
+CREATE DATABASE reliserv_test;

@@ -19,3 +19,12 @@ const prismaClient = new PrismaClient({
 export const prisma = global.__prisma ?? prismaClient;
 
 if (process.env.NODE_ENV !== "production") global.__prisma = prisma;
+
+export async function disconnectPrisma() {
+  await prisma.$disconnect();
+  await pool.end();
+
+  if (process.env.NODE_ENV !== "production") {
+    global.__prisma = undefined;
+  }
+}

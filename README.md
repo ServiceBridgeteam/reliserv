@@ -49,8 +49,16 @@ This project is being developed as a **production-style collaborative system** b
 - GET `/v1/jobs/:id`
 - GET `/v1/jobs?mine=true`
 - POST `/v1/jobs/:id/accept`
+- POST `/v1/jobs/:id/start`
+- POST `/v1/jobs/:id/complete`
+- POST `/v1/jobs/:id/cancel`
+- GET `/v1/jobs/:id/events`
 - Default job status = `OPEN`
 - Atomic lock-on-accept (`OPEN` -> `LOCKED`) with 409 conflict if already taken
+- Lifecycle transitions:
+- `LOCKED` -> `IN_PROGRESS` via `start`
+- `IN_PROGRESS` -> `COMPLETED` via `complete`
+- `OPEN` -> `CANCELED` via `cancel` (creator only, V1 rule)
 - Protected routes via JWT middleware
 
 ### Emergency + Worker API
@@ -63,11 +71,11 @@ This project is being developed as a **production-style collaborative system** b
 - PostgreSQL (Docker)
 - Prisma ORM
 - Tables:
-- User
-- WorkerProfile
-- Job
-- JobEvent
-- Review
+- `User`
+- `WorkerProfile`
+- `Job`
+- `JobEvent`
+- `Review`
 - Migrations + seed script
 
 ### Validation
@@ -184,6 +192,7 @@ docker compose -f infra/docker-compose.yml down
 - `.env` files are ignored by Git.
 - Do not commit secrets.
 - Prisma 7 uses `@prisma/adapter-pg` with `pg`.
+- Test environment uses `apps/api/.env.test` and `reliserv_test` database.
 
 ---
 
@@ -215,18 +224,46 @@ Ensure:
 
 ## V1 In Progress
 
-- Job lifecycle state transitions
 - Reliability score update system
 
 ---
 
-## Atomic Lock Test Proof
+## DEV2 Integration Tests (Jest + Supertest)
+
+Integration suite file:
+
+- `apps/api/src/__tests__/dev2.e2e.test.ts`
+
+What it covers:
+
+- Health + auth protection
+- Emergency create + worker request feed
+- Atomic accept (`200` then `409`)
+- Lifecycle transitions (`start`, `complete`, `cancel` rule)
+- Events endpoint includes `CREATED`, `ACCEPTED`, `STARTED`, `COMPLETED`
+
+Run tests:
+
+```powershell
+docker compose -f infra/docker-compose.yml up -d
+cd apps/api
+$env:DOTENV_CONFIG_PATH=".env.test"
+npx prisma migrate deploy
+npm test
+```
+
+---
+
+## Atomic + Lifecycle Proof
 
 Validated on local API (`http://localhost:4000`) with 3 users:
 
 1. Customer created emergency job via POST `/v1/emergency` -> `201`
 2. Worker A accepted via POST `/v1/jobs/:id/accept` -> `200`
 3. Worker B accepted same job via POST `/v1/jobs/:id/accept` -> `409`
+4. Worker A started job via POST `/v1/jobs/:id/start` -> `200`
+5. Worker A completed job via POST `/v1/jobs/:id/complete` -> `200`
+6. GET `/v1/jobs/:id/events` includes `CREATED`, `ACCEPTED`, `STARTED`, `COMPLETED`
 
 Conflict response from step 3:
 
