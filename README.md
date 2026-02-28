@@ -120,66 +120,101 @@ reliserv/
 
 ---
 
-# Run Locally (5 Minutes)
+# Run Locally (Clear Startup Guide)
 
-## 1) Start Infrastructure (Postgres)
+## Prerequisites
+
+Install these first:
+
+- Node.js 20+ and npm
+- Docker Desktop (running)
+
+## First-Time Setup + Start
+
+Run commands from the repo root: `reliserv/`.
+
+1. Start infrastructure (Postgres + Redis).
 
 ```powershell
 docker compose -f infra/docker-compose.yml up -d
 ```
 
-## 2) Backend Setup
+2. Start backend (API) in terminal 1.
 
 ```powershell
 cd apps/api
-cp .env.example .env
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npm install
+npx prisma migrate dev
+npx prisma db seed
+npm run dev
 ```
 
-Ensure `.env` contains:
+Required values in `apps/api/.env`:
 
 ```txt
 DATABASE_URL="postgresql://reliserv:reliserv@localhost:5432/reliserv?schema=public"
 JWT_SECRET="dev_super_secret_change_me"
 ```
 
-Run Prisma:
+API URLs:
 
-```powershell
-npx prisma migrate dev --name init_v1
-npx prisma db seed
-```
+- `http://localhost:4000`
+- Health check: `http://localhost:4000/health`
 
-Start API:
-
-```powershell
-npm run dev
-```
-
-Backend runs at:
-
-`http://localhost:4000`
-
-Health check:
-
-`http://localhost:4000/health`
-
-Use `localhost` for API URLs in local development (recommended over `127.0.0.1`).
-
-## 3) Frontend Setup
+3. Start frontend in terminal 2.
 
 ```powershell
 cd apps/web
-cp .env.example .env
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npm install
 npm run dev
 ```
 
-Frontend runs at:
+Frontend URL:
 
-`http://localhost:5173`
+- `http://localhost:5173`
 
-## Stop Infrastructure
+## Daily Start (After Initial Setup)
+
+1. Start infra:
+
+```powershell
+docker compose -f infra/docker-compose.yml up -d
+```
+
+2. Start API (terminal 1):
+
+```powershell
+cd apps/api
+npm run dev
+```
+
+3. Start web (terminal 2):
+
+```powershell
+cd apps/web
+npm run dev
+```
+
+## Verify Everything Is Running
+
+Run from another terminal:
+
+```powershell
+curl http://localhost:4000/health
+```
+
+Expected: a successful JSON health response from the API.
+
+Then open:
+
+- `http://localhost:5173`
+
+## Stop the Project
+
+1. Stop API/web dev servers with `Ctrl + C` in each terminal.
+2. Stop Docker services:
 
 ```powershell
 docker compose -f infra/docker-compose.yml down
